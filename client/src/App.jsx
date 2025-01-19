@@ -13,36 +13,29 @@ function App() {
   const [candidates, setCandidates] = useState([]);
   const [isLoadingCandidates, setIsLoadingCandidates] = useState(false);
   const [isVoting, setIsVoting] = useState(false);
+  const [currentAccount, setCurrentAccount] = useState(null);
 
-  const handleStandInElection = () => {
-    setShowElectionForm(true);
-  };
 
-  const handleSubmitElection = async (event) => {
-    event.preventDefault();
-    const {contract, web3} = state;
-    if(!contract){
-      alert("Contract is not initialized");
-      return;
+  //auto connect wallet on loading of the page
+  useEffect(() => {
+    async function connectWallet() {
+      if(window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({
+            methods: 'eth_requestAccounts',
+          });
+          setCurrentAccount(accounts[0]);
+          console.log("Connected account: ", accounts[0]);
+        } catch (error) {
+          console.error("Error Connecting wallet: ", error);
+        }
+      } else {
+        console.warn("MetaMask not detected");
+      }
     }
 
-    try{
-      const accounts = await web3.eth.getAccounts();
-      const transaction = await contract.methods.candidateRegistration().send(
-        {from: accounts[0],
-          gas: 300000
-        });
-      console.log(transaction);
-
-      alert("candidate Registered Successfully");
-      setWalletAddress('');
-      setShowElectionForm(false);
-      fetchCandidates();
-    } catch(error) {
-      console.error("Error registering candidate:", error);
-      alert("Failed to register candidate. Please try again.");
-    }
-  };
+    connectWallet();
+  }, [])
 
 
   //initializing the contract
@@ -80,6 +73,41 @@ function App() {
 
     web3 && initializeContract();
   }, []);
+
+
+
+  const handleStandInElection = () => {
+    setShowElectionForm(true);
+  };
+
+  const handleSubmitElection = async (event) => {
+    event.preventDefault();
+    const {contract, web3} = state;
+    if(!contract){
+      alert("Contract is not initialized");
+      return;
+    }
+
+    try{
+      // const accounts = await web3.eth.getAccounts();
+      const transaction = await contract.methods.candidateRegistration().send(
+        {from: currentAccount,
+          gas: 300000
+        });
+      console.log(transaction);
+
+      alert("candidate Registered Successfully");
+      setWalletAddress('');
+      setShowElectionForm(false);
+      fetchCandidates();
+    } catch(error) {
+      console.error("Error registering candidate:", error);
+      alert("Failed to register candidate. Please try again.");
+    }
+  };
+
+
+  
 
 
   
@@ -123,27 +151,22 @@ function App() {
       return;
     }
 
-    if(candidateId<0 || candidateId >= candidates.length){
-      alert("Please enter a valid Candidate ID");
+    if(!candidateId || isNaN(candidateId) ||candidateId<0 || candidateId >= candidates.length){
+      alert("Invalid Candidate ID");
       setCandidateId('');
-      return;
-    }
-
-    if(candidateId == ''){
-      alert("Please ener a candidate ID to vote");
       return;
     }
 
     try{
       const accounts = await web3.eth.getAccounts();
       await contract.methods.Vote(candidateId).send({
-        from: accounts[0],
+        from: currentAccount,
         gas: 300000
       });
 
       setCandidateId('');
       fetchCandidates();    //refresh candidates
-      alert("Vote Casted Successfully");
+      alert("Vote Cast Successfully");
     } catch (error){
       console.error("Error casting vote: ", error);
       alert("Failed to cast vote. Please try again later.")
@@ -179,39 +202,15 @@ function App() {
         {/* Election Registration Form */}
         {showElectionForm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
-              <h2 className="text-2xl font-bold mb-6 text-gray-900">Register as a Candidate</h2>
-              <form onSubmit={handleSubmitElection}>
-                <div className="mb-6">
-                  <label htmlFor="walletAddress" className="block text-sm font-medium text-gray-700 mb-2">
-                    Wallet Address
-                  </label>
-                  <input
-                    type="text"
-                    id="walletAddress"
-                    value={walletAddress}
-                    onChange={(e) => setWalletAddress(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                    placeholder="Enter your wallet address"
-                    required
-                  />
-                </div>
-                <div className="flex space-x-4">
-                  <button
-                    type="submit"
-                    className="flex-1 bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
-                  >
-                    Register
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowElectionForm(false)}
-                    className="flex-1 bg-gray-200 text-gray-800 font-semibold py-2 rounded-lg hover:bg-gray-300 transition-colors duration-200"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
+            <div className="bg-white rounded-lg p-8">
+              <h2 className="text-2xl font-bold mb-6">Register as a Candidate</h2>
+              <p>Wallet Address: {currentAccount}</p>
+              <button
+                onClick={handleSubmitElection}
+                className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Register
+              </button>
             </div>
           </div>
         )}
