@@ -63,7 +63,10 @@ function App() {
     initializeContract();
   }, []);
 
-  const handleStandInElection = () => setShowElectionForm(true);
+  const handleStandInElection = () => {
+    setShowElectionForm(true);
+  }
+    
 
   const handleSubmitElection = async (event) => {
     event.preventDefault();
@@ -84,6 +87,7 @@ function App() {
       fetchCandidates();
     } catch (error) {
       console.error("Error registering candidate:", error);
+      setShowElectionForm(false);
       alert("Failed to register candidate. Please try again.");
     }
   };
