@@ -13,7 +13,8 @@ function App() {
   const [isVoting, setIsVoting] = useState(false);
   const [currentAccount, setCurrentAccount] = useState(null);
 
-  const CONTRACT_ADDRESS = "0x751f3e144A2E9887042404E36a4631EF71C5BFe9";
+  const CONTRACT_ADDRESS = "0x173360090b8afC638f2D6F57B55E12018C65B978";
+
 
   // Auto-connect wallet on page load
   useEffect(() => {
@@ -38,14 +39,19 @@ function App() {
   // Initializing the contract
   useEffect(() => {
     const initializeContract = async () => {
-      const web3 = new Web3(
-        new Web3.providers.HttpProvider(
-          `https://eth-sepolia.alchemyapi.io/v2/${import.meta.env.VITE_PROJECT_ID}`
-        )
-      );
+      // const web3 = new Web3(
+      //   new Web3.providers.HttpProvider(
+      //     `https://eth-sepolia.g.alchemy.com/v2/${import.meta.env.VITE_PROJECT_ID}`
+      //   )
+      // );
+      if(!window.ethereum){
+        return;
+      }
+      const web3 = new Web3(window.ethereum);
 
       try {
         const contract = new web3.eth.Contract(ElectionAbi, CONTRACT_ADDRESS);
+        console.log(contract);
 
         web3.eth.net.isListening()
           .then(() => console.log("Connected to Sepolia network via Alchemy"))
@@ -77,9 +83,10 @@ function App() {
     }
 
     try {
-      await contract.methods
-        .candidateRegistration()
-        .send({ from: currentAccount, gas: 300000 });
+      await contract.methods.candidateRegistration().send(
+        {
+          from: currentAccount, gas: 300000
+        });
 
       alert("Candidate Registered Successfully");
       setWalletAddress("");

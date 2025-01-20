@@ -21,7 +21,7 @@ contract ElectionContract{
 
 
     function candidateRegistration() public {               //function for getting the person registered as a candidate if it wants to stand in a election
-        // require(isCandidate[msg.sender] == false, "You are already a candidate.");
+        require(isCandidate[msg.sender] == false, "You are already a candidate.");
         Candidate memory newCandidate = Candidate(msg.sender, candidateNumber, 0);
         candidateNumber++;
         candidates.push(newCandidate);
@@ -31,7 +31,7 @@ contract ElectionContract{
 
 
     function Vote(uint _candidateId) public {
-        // require(!hasVoted[msg.sender], "You have already Voted");
+        require(!hasVoted[msg.sender], "You have already Voted");
         require(_candidateId >= 0 && _candidateId <= candidateNumber, "Invalid Candidate ID");
 
         candidates[_candidateId].votes++;
