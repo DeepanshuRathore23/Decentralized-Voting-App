@@ -13,7 +13,7 @@ function App() {
   const [isVoting, setIsVoting] = useState(false);
   const [currentAccount, setCurrentAccount] = useState(null);
 
-  const CONTRACT_ADDRESS = "0x173360090b8afC638f2D6F57B55E12018C65B978";
+  const CONTRACT_ADDRESS = "0xDE58a80e6365aC3fFB3d833eb64A893eAc33E2da";
 
 
   // Auto-connect wallet on page load
@@ -71,6 +71,10 @@ function App() {
 
   const handleStandInElection = () => {
     setShowElectionForm(true);
+  }
+
+  const handleCancel = () => {
+    setShowElectionForm(false);
   }
     
 
@@ -139,12 +143,29 @@ function App() {
       return;
     }
 
+    
+
+    if(candidateId >= candidates.length){
+      alert("Invalid Candidate ID");
+      setIsVoting(false);
+      setCandidateId("");
+      return;
+    }
+
     try {
+      const hasVoted = await contract.methods.hasVoted(currentAccount).call();
+      if (hasVoted) {
+        alert("You have already voted.");
+        setIsVoting(false);
+        setCandidateId("");
+        return;
+      }
+
       await contract.methods
         .Vote(candidateId)
         .send({ from: currentAccount, gas: 300000 });
 
-      setCandidateId("");
+      
       fetchCandidates();
       alert("Vote Cast Successfully");
     } catch (error) {
@@ -152,6 +173,7 @@ function App() {
       alert("Failed to cast vote. Please try again.");
     } finally {
       setIsVoting(false);
+      setCandidateId("");
     }
   };
 
@@ -185,15 +207,35 @@ function App() {
             <div className="bg-white rounded-lg p-8">
               <h2 className="text-2xl font-bold mb-6">Register as a Candidate</h2>
               <p>Wallet Address: {currentAccount}</p>
-              <button
-                onClick={handleSubmitElection}
-                className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Register
-              </button>
+              <div className="flex space-x-4 mt-4">
+                <button
+                  onClick={handleSubmitElection}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 border-xl"
+                >
+                  Register
+                </button>
+                <button
+                  onClick={handleCancel} // Define this handler for cancellation
+                  className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 border-xl"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         )}
+
+
+        {/* walllet address */}
+        {currentAccount && (<div className="walletAddress font-bold flex justify-center mb-4">
+          Your Wallet Address: {currentAccount} 
+        </div>)}
+
+        {/* walllet address */}
+        {(!currentAccount) && (<div className="walletAddress font-bold flex justify-center mb-4">
+          Your Browser does not have any Crypto Wallet. Please connect to wallet to participate in elections.
+        </div>)}
+
 
         {/* Voting Section */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-8">

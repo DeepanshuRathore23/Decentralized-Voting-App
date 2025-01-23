@@ -15,8 +15,8 @@ contract ElectionContract{
 
 
     Candidate[] public candidates;      //array for storing data of all the candidatess standing in the elections
-    mapping(address => bool) hasVoted;          // a map for keeping the track of voters, wheather they have voted or not because each voter can vote only once.
-    mapping(address => bool) isCandidate;
+    mapping(address => bool) public hasVoted;          // a map for keeping the track of voters, wheather they have voted or not because each voter can vote only once.
+    mapping(address => bool) public isCandidate;
     mapping(uint => Candidate) public candidateById;
 
 
